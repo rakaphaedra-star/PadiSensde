@@ -17,11 +17,12 @@ st.set_page_config(
 )
 
 # ─── Auth Guard & Theme ───────────────────────────────────────────────────────
-theme_utils.check_auth()
-theme    = theme_utils.THEMES[st.session_state.theme]
-surf_rgb = theme["surface"]
-card_rgb = theme.get("card_rgb", surf_rgb)
-theme_utils.inject_theme("beranda")
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+if "detected_diseases" not in st.session_state:
+    st.session_state.detected_diseases = []
+if "riwayat_list" not in st.session_state:
+    st.session_state.riwayat_list = []
 
 # ─── Page-level CSS ───────────────────────────────────────────────────────────
 st.markdown(f"""
