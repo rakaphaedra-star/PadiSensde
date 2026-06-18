@@ -3,7 +3,6 @@ ultralytics
 opencv-python-headless
 pillow
 google-genai
+psycopg2-binary
 plotly
 pandas
-psycopg2-binary
-numpy
