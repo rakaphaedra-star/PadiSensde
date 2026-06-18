@@ -61,7 +61,8 @@ def check_auth():
             st.session_state.user_phone           = params.get("user_phone", "-")
             st.session_state.user_password        = params.get("user_password", "")
             st.session_state.profile_avatar_emoji = params.get("profile_avatar_emoji", "👨‍🌾")
-
+            st.session_state.user_id              = int(params.get("user_id", 0))  # ← TAMBAH INI
+            
     # If logged in, always keep query params in sync so they survive navigation
     if st.session_state.is_logged_in:
         current_params = dict(st.query_params)
@@ -73,6 +74,7 @@ def check_auth():
                 "user_phone":          st.session_state.user_phone,
                 "user_password":       st.session_state.user_password,
                 "profile_avatar_emoji": st.session_state.profile_avatar_emoji,
+                "user_id":              str(st.session_state.get("user_id", 0)),  # ← TAMBAH INI
             })
         return  # authenticated
 
@@ -322,15 +324,19 @@ def inject_theme(page_name: str = ""):
     st.markdown(css, unsafe_allow_html=True)
 
 
-# ─── Navbar Renderer ──────────────────────────────────────────────────────────
+# ─── PATCH untuk theme_utils.py ──────────────────────────────────────────────
+# Ganti fungsi render_navbar() yang lama dengan ini
+# Perubahan: tambah kolom "Grafik" di navbar
+
 def render_navbar(active_page: str = ""):
     """Render the floating glassmorphism navigation bar."""
     theme = THEMES[st.session_state.get("theme", "dark")]
 
     st.markdown('<div class="navbar-container">', unsafe_allow_html=True)
 
-    col_logo, col_beranda, col_riwayat, col_panduan, col_tentang, col_actions = st.columns(
-        [2, 1.2, 1.2, 1.2, 1.2, 1.5], gap="small"
+    # ← Tambah kolom grafik di sini (ubah rasio kolom)
+    col_logo, col_beranda, col_riwayat, col_grafik, col_panduan, col_tentang, col_actions = st.columns(
+        [2, 1.1, 1.1, 1.1, 1.1, 1.1, 1.4], gap="small"
     )
 
     with col_logo:
@@ -340,17 +346,23 @@ def render_navbar(active_page: str = ""):
         )
 
     with col_beranda:
-        lbl = " **Beranda**" if active_page == "beranda" else "Beranda"
+        lbl = "**Beranda**" if active_page == "beranda" else "Beranda"
         if st.button(lbl, key="nav_beranda", use_container_width=True):
             st.switch_page("app.py")
 
     with col_riwayat:
-        lbl = " **Riwayat**" if active_page == "riwayat" else "Riwayat"
+        lbl = "**Riwayat**" if active_page == "riwayat" else "Riwayat"
         if st.button(lbl, key="nav_riwayat", use_container_width=True):
             st.switch_page("pages/riwayat.py")
 
+    with col_grafik:
+        # ← BARU: tombol Grafik
+        lbl = "**📈 Grafik**" if active_page == "grafik" else "📈 Grafik"
+        if st.button(lbl, key="nav_grafik", use_container_width=True):
+            st.switch_page("pages/grafik.py")
+
     with col_panduan:
-        lbl = " **Panduan**" if active_page == "panduan" else "Panduan"
+        lbl = "**Panduan**" if active_page == "panduan" else "Panduan"
         if st.button(lbl, key="nav_panduan", use_container_width=True):
             st.switch_page("pages/panduan.py")
 

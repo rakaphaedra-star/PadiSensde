@@ -1,3 +1,5 @@
+import db_utils
+
 import streamlit as st
 from ultralytics import YOLO
 from PIL import Image
@@ -15,8 +17,17 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-
 # ─── Auth Guard & Theme ───────────────────────────────────────────────────────
+theme_utils.check_auth()
+
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"
+
+theme    = theme_utils.THEMES[st.session_state.theme]
+surf_rgb = theme["surface"]
+card_rgb = theme.get("card_rgb", surf_rgb)
+theme_utils.inject_theme("beranda")
+
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "detected_diseases" not in st.session_state:
@@ -268,7 +279,7 @@ def load_model():
 model = load_model()
 
 # ─── Gemini Config ───────────────────────────────────────────────────────────
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyBsFZF6UtgNqMLh9XPC5SdPhTYAl7iDN8w")
+GGEMINI_API_KEY = st.secrets["gemini"]["api_key"]
 
 def get_system_prompt(detected_diseases: list) -> str:
     if not detected_diseases:
@@ -513,20 +524,45 @@ with col_result:
 
             detections.sort(key=lambda x: x[1], reverse=True)
             st.session_state.detected_diseases = disease_labels
+            
+            
+                        # ── DEBUG ──
+            _uid = st.session_state.get("user_id", 0)
+            _db  = db_utils.test_connection()
+            st.warning(f"DEBUG → user_id: {_uid} | db_ok: {_db}")
+             # DEBUG SEMENTARA
+            st.info(f"user_id={st.session_state.get('user_id')} | db={db_utils.test_connection()}")
 
-            # Save to riwayat
+# Save to riwayat (session + database)
+            user_id = st.session_state.get("user_id", 0)
+            db_ok   = db_utils.test_connection() if user_id else False
+            if "riwayat_list" not in st.session_state:
+                st.session_state.riwayat_list = []
+
             for name, conf in detections:
                 info   = DISEASE_INFO.get(name, {})
                 status = "Sehat" if name == "Rice__Healthy" else "Terdeteksi"
-                entry  = {
-                    "disease":    info.get("label", name),
+                label  = info.get("label", name)
+
+                # Simpan ke session state
+                entry = {
+                    "disease":    label,
                     "confidence": conf * 100,
                     "status":     status,
                     "date":       datetime.now(),
                 }
-                if "riwayat_list" not in st.session_state:
-                    st.session_state.riwayat_list = []
                 st.session_state.riwayat_list.append(entry)
+
+                # Simpan ke MySQL
+                if db_ok and user_id:
+                    db_utils.save_scan(
+                        user_id       = user_id,
+                        user_name     = st.session_state.get("current_user", ""),
+                        disease_key   = name,
+                        disease_label = label,
+                        confidence    = conf * 100,
+                        status        = status,
+                    )
 
             # Render disease cards
             for name, conf in detections:

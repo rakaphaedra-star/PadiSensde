@@ -1,4 +1,7 @@
-ultralytics
 streamlit
+ultralytics
 pillow
 google-genai
+psycopg2-binary
+plotly
+pandas
