@@ -29,8 +29,8 @@ def _get_db_config() -> Dict[str, Any]:
                 "user":     st.secrets["supabase"]["user"],
                 "password": st.secrets["supabase"]["password"],
             }
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[SECRET ERROR] Gagal baca st.secrets['supabase']: {type(e).__name__}: {e}")
     # Fallback (isi manual kalau mau test lokal tanpa secrets.toml)
     return {
         "host":     "aws-1-ap-south-1.pooler.supabase.com",
